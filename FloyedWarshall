@@ -1,0 +1,152 @@
+#include <stdio.h>
+#include <limits.h>
+
+#define MAX 11  // Maximum number of vertices (allowing 1 extra for 1-based indexing)
+#define INF INT_MAX  // Represents infinity, the largest integer value
+
+// Function to print the path from i to j using the nextNode matrix
+void printPath(int i, int j, int nextNode[MAX][MAX]) {
+    // If no path exists, print "No path"
+    if (nextNode[i][j] == -1) {
+        printf("No path");
+        return;
+    }
+
+    // Print the starting node
+    printf("%d", i);
+    // Continue printing the path until we reach the destination node
+    while (i != j) {
+        // Move to the next node in the path
+        i = nextNode[i][j];
+        // Print the next node in the path
+        printf(" -> %d", i);
+    }
+}
+
+// Floyd-Warshall Algorithm with path reconstruction
+void floydWarshall(int n, int graph[MAX][MAX]) {
+    int dist[MAX][MAX], nextNode[MAX][MAX], i, j, k;
+
+    // Initialize distance and nextNode matrices
+    for (i = 1; i <= n; i++) {
+        for (j = 1; j <= n; j++) {
+            dist[i][j] = graph[i][j];  // Initialize dist to the direct edge weight from graph
+            // If there is an edge between i and j, the next node on the path is j
+            if (graph[i][j] != INF && i != j) {
+                nextNode[i][j] = j;
+            } else {
+                // No path exists
+                nextNode[i][j] = -1;
+            }
+        }
+    }
+
+    // Floyd-Warshall algorithm with path reconstruction
+    for (k = 1; k <= n; k++) {  // Iterate through all intermediate nodes
+        for (i = 1; i <= n; i++) {  // For each source node
+            for (j = 1; j <= n; j++) {  // For each destination node
+                // If there is a path from i to k and from k to j, check if using k improves the path
+                if (dist[i][k] != INF && dist[k][j] != INF &&
+                    dist[i][k] + dist[k][j] < dist[i][j]) {
+                    dist[i][j] = dist[i][k] + dist[k][j];  // Update the shortest distance
+                    nextNode[i][j] = nextNode[i][k];  // Update the next node on the path
+                }
+            }
+        }
+
+        // Print the intermediate distance matrix after processing the k-th intermediate node
+        printf("\nA(%d):", k);
+        for (i = 1; i <= n; i++) {
+            printf("%5d", i);  // Print column headers (vertex numbers)
+        }
+        printf("\n");
+
+        // Print the matrix of shortest distances after this iteration
+        for (i = 1; i <= n; i++) {
+            printf("%-5d", i);  // Print row header (source node)
+            for (j = 1; j <= n; j++) {
+                // If there's no path, print "INF"
+                if (dist[i][j] == INF) {
+                    printf("  INF");
+                } else {
+                    // Otherwise, print the shortest distance
+                    printf("%5d", dist[i][j]);
+                }
+            }
+            printf("\n");
+        }
+    }
+
+    // Print the final shortest paths along with the distances
+    printf("\nShortest Paths with intermediate nodes:\n");
+    for (i = 1; i <= n; i++) {
+        for (j = 1; j <= n; j++) {
+            if (i != j && dist[i][j] != INF) {  // Skip printing for the same node and non-reachable pairs
+                printPath(i, j, nextNode);  // Print the path from i to j
+                printf(": %d\n", dist[i][j]);  // Print the shortest distance from i to j
+            }
+        }
+    }
+}
+
+int main() {
+    int n, i, j;
+    int graph[MAX][MAX];
+
+    // Prompt the user for the number of vertices
+    printf("Enter number of vertices (max %d): ", MAX - 1);
+    scanf("%d", &n);
+
+    // Initialize the graph matrix with INF (infinity) for all pairs except self-loops
+    for (i = 1; i <= n; i++) {
+        for (j = 1; j <= n; j++) {
+            // Diagonal elements are 0 (no cost to reach from a node to itself)
+            if (i == j) {
+                graph[i][j] = 0;
+            } else {
+                graph[i][j] = INF;  // All other pairs initially have no path (set to INF)
+            }
+        }
+    }
+
+    // Prompt the user to enter the adjacency matrix
+    printf("\nEnter the adjacency matrix (use -1 for infinity):\n");
+    for (i = 1; i <= n; i++) {  // For each source vertex
+        for (j = 1; j <= n; j++) {  // For each destination vertex
+            // Ask for the weight of the edge from vertex i to vertex j
+            printf("Enter weight for edge %d -> %d: ", i, j);
+            scanf("%d", &graph[i][j]);
+            // If the user enters -1, treat it as no path (set to INF)
+            if (graph[i][j] == -1) {
+                graph[i][j] = INF;
+            }
+        }
+    }
+
+    // Print the initial adjacency matrix
+    printf("\nInitial Adjacency Matrix:\n     ");
+    for (i = 1; i <= n; i++) {
+        printf("%5d", i);  // Print column headers (vertex numbers)
+    }
+    printf("\n");
+
+    // Print the adjacency matrix showing the edge weights
+    for (i = 1; i <= n; i++) {
+        printf("%-5d", i);  // Print row header (source node)
+        for (j = 1; j <= n; j++) {
+            // If no edge exists, print "INF"
+            if (graph[i][j] == INF) {
+                printf("  INF");
+            } else {
+                // Otherwise, print the edge weight
+                printf("%5d", graph[i][j]);
+            }
+        }
+        printf("\n");
+    }
+
+    // Call the Floyd-Warshall algorithm to compute the shortest paths
+    floydWarshall(n, graph);
+
+    return 0;
+}
