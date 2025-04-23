@@ -1,0 +1,84 @@
+#include <stdio.h>
+#include <stdbool.h>
+
+int c = 0;
+
+void print(int n, char board[4][4]) {
+    printf("Solution %d:\n", ++c);
+    printf("  \t1\t2\t3\t4\n");
+
+    int q_num = 1;  
+
+    for (int i = 0; i < n; i++) {
+        printf("%d\t", i + 1);
+        for (int j = 0; j < n; j++) {
+            if (board[i][j] == 'Q') {
+                printf("Q%d\t", q_num);
+                q_num++;
+            }
+           
+            else {
+                printf(".\t");
+            }
+        }
+        printf("\n");
+    }
+
+    printf("\n");
+}
+
+bool is_safe(int n, char board[4][4], int row, int col) {
+    for (int i = 0; i < n; i++) {
+        if (i == col) continue;
+        if (board[row][i] == 'Q') return false;
+    }
+
+    for (int i = 0; i < n; i++) {
+        if (i == row) continue;
+        if (board[i][col] == 'Q') return false;
+    }
+
+    int i = row - 1, j = col - 1;
+    while (i >= 0 && j >= 0) {
+        if (board[i][j] == 'Q') return false;
+        i--;
+        j--;
+    }
+
+    i = row - 1;
+    j = col + 1;
+    while (i >= 0 && j < n) {
+        if (board[i][j] == 'Q') return false;
+        i--;
+        j++;
+    }
+
+    return true;
+}
+
+void check(int n, char board[4][4], int row) {
+    if (row == n) {
+        print(n, board);
+        return;
+    }
+
+    for (int j = 0; j < n; j++) {
+        if (is_safe(n, board, row, j)) {
+            board[row][j] = 'Q';
+            check(n, board, row + 1);
+            board[row][j] = ' ';
+        }
+    }
+}
+
+int main() {
+    char board[4][4];
+
+    for (int i = 0; i < 4; i++)
+        for (int j = 0; j < 4; j++)
+            board[i][j] = ' ';
+
+    check(4, board, 0);
+
+    return 0;
+}
