@@ -1,0 +1,134 @@
+#include <stdio.h>
+#include <limits.h>
+
+#define INF INT_MAX
+#define V 7  // Number of vertices
+
+// Structure to store edges
+struct Edge {
+    int src, dest, weight;
+};
+
+// Function to print the shortest path with weight
+void printPath(int path[], int v) {
+    if (path[v] == -1) {
+        printf("%d", v + 1); // Convert 0-based to 1-based output
+        return;
+    }
+    printPath(path, path[v]);
+    printf(" -> %d", v + 1);
+}
+
+// Bellman-Ford Algorithm with path and weight tracking
+void BellmanFord(struct Edge edges[], int distance[V][V], int path[], int edgeCount, int src) {
+    
+    // Step 1: Initialize distance and path arrays
+    for (int i = 0; i < V; i++) {
+        for (int j = 0; j < V; j++) {
+            distance[i][j] = INF;
+        }
+        path[i] = -1; // Initialize all paths to -1 (no predecessor)
+    }
+
+    // Distance to source is 0
+    for (int i = 0; i < V; i++) {
+        distance[0][i] = (i == src) ? 0 : INF;
+    }
+
+    // Step 2: Relax edges (V-1) times
+    for (int i = 1; i < V; i++) {
+        for (int k = 0; k < V; k++) {
+            distance[i][k] = distance[i - 1][k]; // Copy previous distances
+        }
+
+        for (int j = 0; j < edgeCount; j++) {
+            int u = edges[j].src, v = edges[j].dest, weight = edges[j].weight;
+            if (distance[i - 1][u] != INF && distance[i - 1][u] + weight < distance[i][v]) {
+                distance[i][v] = distance[i - 1][u] + weight;
+                path[v] = u; // Store the predecessor for path reconstruction
+            }
+        }
+    }
+
+    // Step 3: Detect Negative Cycle
+    int hasNegativeCycle = 0;
+    for (int j = 0; j < edgeCount; j++) {
+        int u = edges[j].src, v = edges[j].dest, weight = edges[j].weight;
+        if (distance[V - 1][u] != INF && distance[V - 1][u] + weight < distance[V - 1][v]) {
+            hasNegativeCycle = 1;
+            break;
+        }
+    }
+
+    // Print Distance Matrix
+    printf("\t1->1\t1->2\t1->3\t1->4\t1->5\t1->6\t1->7\n");
+    for (int i = 0; i < V; i++) {
+        printf("%d\t", i + 1);
+        for (int j = 0; j < V; j++) {
+            if (distance[i][j] == INF)
+                printf(" &\t");
+            else
+                printf("%d\t", distance[i][j]);
+        }
+        printf("\n");
+    }
+
+    // Print Negative Cycle Detection Result
+    if (hasNegativeCycle) {
+        printf("\nNegative weight cycle detected in the graph!\n");
+        return;
+    } else {
+        printf("\nNo negative weight cycle detected.\n");
+    }
+
+    // Print Shortest Paths with Weights
+    printf("\nShortest Paths from Source (%d):\n", src + 1);
+    for (int i = 1; i < V; i++) {
+        if (distance[V - 1][i] != INF) {
+            printf("Path to %d: ", i + 1);
+            printPath(path, i);
+            printf(" | Total Weight: %d\n", distance[V - 1][i]);
+        } else {
+            printf("Path to %d: No path available\n", i + 1);
+        }
+    }
+}
+
+// Driver Code
+int main() {
+    // Adjacency matrix for 7 vertices (0-based index)
+    int adj[V][V] = {
+        {0,   6,   5,   5,   INF, INF, INF},
+        {INF, 0,   INF, INF, -1,  INF, INF},
+        {INF, -2,  0,   INF, 1,   INF, INF},
+        {INF, INF, -2,  0,   INF, -1,  INF},
+        {INF, INF, INF, INF, 0,   INF, 3},
+        {INF, INF, INF, INF, INF, 0,   3},
+        {INF, INF, INF, INF, INF, INF, 0},
+    };
+
+    struct Edge edges[V * V];  // Maximum possible edges
+    int edgeCount = 0;
+
+    // Populate edges array (0-based index)
+    for (int i = 0; i < V; i++) {
+        for (int j = 0; j < V; j++) {
+            if (adj[i][j] != 0 && adj[i][j] != INF) {
+                edges[edgeCount].src = i;
+                edges[edgeCount].dest = j;
+                edges[edgeCount].weight = adj[i][j];
+                edgeCount++;
+            }
+        }
+    }
+
+    int distance[V][V];  // Distance matrix
+    int path[V];          // Stores paths
+
+    int src = 0; // Fixed source vertex as 0 (1 in 1-based index)
+
+    // Run Bellman-Ford Algorithm
+    BellmanFord(edges, distance, path, edgeCount, src);
+
+    return 0;
+}
